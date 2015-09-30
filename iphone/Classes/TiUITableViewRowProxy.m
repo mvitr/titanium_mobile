@@ -26,6 +26,14 @@ NSString * const defaultRowTableClass = @"_default_";
 // TODO: Clean this up a bit
 #define NEEDS_UPDATE_ROW 1
 
+//vtr bugfix: System Versioning Preprocessor Macro
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+/* usage:
+ if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"3.1.1")) {
+ ...
+ }
+*/
+
 @interface TiUITableViewRowContainer : UIView
 {
 	TiProxy * hitTarget;
@@ -341,20 +349,34 @@ TiProxy * DeepScanForProxyOfViewContainingPoint(UIView * targetView, CGPoint poi
 -(void)configureRightSide:(UITableViewCell*)cell
 {
 	BOOL hasChild = [TiUtils boolValue:[self valueForKey:@"hasChild"] def:NO];
-	if (hasChild)
+    BOOL hasDetail = [TiUtils boolValue:[self valueForKey:@"hasDetail"] def:NO];
+    BOOL hasCheck = [TiUtils boolValue:[self valueForKey:@"hasCheck"] def:NO];
+ 
+    if (hasChild && hasDetail && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0"))
+    {
+        cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton; //this should show detail and info icon on iOS7
+    }
+    else if (hasChild)
 	{
 		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 	}
 	else
 	{
-		BOOL hasDetail = [TiUtils boolValue:[self valueForKey:@"hasDetail"] def:NO];
-		if (hasDetail)
-		{
-			cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-		}
+        if (hasDetail)
+        {
+            //vtr bugfix for ios7 duplicate icon:
+            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0"))
+            {
+                cell.accessoryType = UITableViewCellAccessoryDetailButton;
+            }
+            else
+            {
+                //original code
+                cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+            }
+        }
 		else
 		{
-			BOOL hasCheck = [TiUtils boolValue:[self valueForKey:@"hasCheck"] def:NO];
 			if (hasCheck)
 			{
 				cell.accessoryType = UITableViewCellAccessoryCheckmark;
